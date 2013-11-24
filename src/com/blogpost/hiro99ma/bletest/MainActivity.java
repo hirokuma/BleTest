@@ -5,10 +5,13 @@ import com.blogpost.hiro99ma.bleutils.BleUtils;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.util.Log;
 import android.view.Menu;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
+    
+    private static final String TAG = "MainActivity";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +41,8 @@ public class MainActivity extends Activity {
 			return;
 		}
 		
-		int ret = BleUtils.startScan("RC-S390", 10000);
+		//5秒検索
+		int ret = BleUtils.startScan("PaSoRi", 5000, mScanResultCallback);
 		if (ret == BleUtils.SUCCESS) {
 			Toast.makeText(this, "scanning...", Toast.LENGTH_LONG).show();
 		} else {
@@ -50,6 +54,25 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
+	
+	private BleUtils.scanResultCallback mScanResultCallback = new BleUtils.scanResultCallback() {
+        
+        @Override
+        public void onResult(final int result) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    String str;
+                    if (result == BleUtils.SUCCESS) {
+                        str = "detect";
+                    } else {
+                        str = "not found";
+                    }
+                    Toast.makeText(getApplicationContext(), str, Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
 	
 	@Override
 	protected void onPause() {

@@ -27,6 +27,7 @@ public class BleUtils {
 	public final static int ENOTSUPPORT_BT = -3;
 	public final static int ENOTSUPPORT_LE = -4;
 	public final static int ESCANNING = -5;
+	public final static int ESCANFAIL = -6;
 	
 	private static final String TAG = "BleUtils";
 	private static final int REQUEST_ENABLE_BT = 1;
@@ -35,6 +36,7 @@ public class BleUtils {
 	private static Handler sHandler = new Handler();		//スキャン用
 	private static boolean sScanning = false;
 	private static String sScanDeviceName = null;
+	private static scanResultCallback sScanResultCallback = null;
 
 	
 	/**
@@ -125,7 +127,7 @@ public class BleUtils {
 			return ENOTOPEN;
 		}
 		
-		stopScan();
+		_stopScan();
 
 		return SUCCESS;
 	}
@@ -136,7 +138,7 @@ public class BleUtils {
 	 * @param scanPeriodMs
 	 * @return
 	 */
-	public static int startScan(String deviceName, int scanPeriodMs) {
+	public static int startScan(String deviceName, int scanPeriodMs, scanResultCallback callback) {
 		//onCreate()を呼んでいない場合の対処
 		if (sBluetoothAdapter == null) {
 			Log.d(TAG, "not open");
@@ -153,25 +155,44 @@ public class BleUtils {
 			//一定時間後の動作
 			@Override
             public void run() {
-				stopScan();
+				_stopScan();
 				
-				//TODO:呼出元にコールバック
+				//呼出元にコールバック(失敗)
+                if (sScanResultCallback != null) {
+                    scanResultCallback callback = sScanResultCallback;
+                    sScanResultCallback = null;
+                    callback.onResult(ESCANFAIL);
+                }
             }
 		}, scanPeriodMs);
 		
 		sScanning = true;
 		sScanDeviceName = deviceName;
+		sScanResultCallback = callback;
 		sBluetoothAdapter.startLeScan(sCallback);
 
 		return SUCCESS;
 	}
 	
+    /**
+     * BLE機器スキャンの停止。
+     * スキャンしていないときに呼んでも、エラーは返さない。
+     * @return
+     */
+	public static int stopScan() {
+	    int ret = _stopScan();
+	    sScanResultCallback = null;
+	    
+	    return ret;
+	}
+	
 	/**
-	 * BLE機器スキャンの停止。
+	 * BLE機器スキャンの停止(内部用)。
 	 * スキャンしていないときに呼んでも、エラーは返さない。
+	 * 上位から与えられたコールバックは消さないので、呼び元で対応すること。
 	 * @return
 	 */
-	public static int stopScan() {
+	private static int _stopScan() {
 		//onCreate()を呼んでいない場合の対処
 		if (sBluetoothAdapter == null) {
 			Log.d(TAG, "not open");
@@ -199,10 +220,19 @@ public class BleUtils {
 			if ((sScanDeviceName != null) && (sScanDeviceName.equals(device.getName()))) {
 				//デバイス名が一致
 				Log.d(TAG, "device found");
-				stopScan();
+				_stopScan();
 				
-				//TODO:呼出元にコールバック
+				//呼出元にコールバック(成功)
+				if (sScanResultCallback != null) {
+				    scanResultCallback callback = sScanResultCallback;
+				    sScanResultCallback = null;
+				    callback.onResult(SUCCESS);
+				}
 			}
 		}
 	};
+	
+	public interface scanResultCallback {
+	    public void onResult(int result);
+	}
 }
