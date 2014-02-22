@@ -269,6 +269,7 @@ public class BleUtils {
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
             Log.d(TAG, "onLeScan[" + device.getName() + "]  RSSI:" + rssi);
+            printScanRecord(scanRecord);    //for debug
             if ((sScanDeviceName != null) && (sScanDeviceName.equals(device.getName()))) {
                 //デバイス名が一致
                 Log.d(TAG, "device found");
@@ -290,6 +291,154 @@ public class BleUtils {
         }
     };
 
+    private static void printScanRecord(final byte[] scanRecord) {
+        final int LEN = scanRecord.length;
+        int pos = 0;
+        while (pos < LEN) {
+            int len = (int)(scanRecord[pos] & 0xff);
+            if (len > 0) {
+                switch (scanRecord[pos+1] & 0xff) {
+                case 0x01:
+                    Log.d(TAG, "Flags");
+                    break;
+                    
+                case 0x02:
+                    Log.d(TAG, "Incomplete List of 16-bit Service Class UUIDs");
+                    break;
+                    
+                case 0x03:
+                    Log.d(TAG, "Complete List of 16-bit Service Class UUIDs");
+                    break;
+                    
+                case 0x04:
+                    Log.d(TAG, "Incomplete List of 32-bit Service Class UUIDs");
+                    break;
+                    
+                case 0x05:
+                    Log.d(TAG, "Complete List of 32-bit Service Class UUIDs");
+                    break;
+                    
+                case 0x06:
+                    Log.d(TAG, "Incomplete List of 128-bit Service Class UUIDs");
+                    break;
+                    
+                case 0x07:
+                    Log.d(TAG, "Complete List of 128-bit Service Class UUIDs");
+                    break;
+                    
+                case 0x08:
+                    Log.d(TAG, "Shortened Local Name");
+                    break;
+                    
+                case 0x09:
+                    Log.d(TAG, "Complete Local Name");
+                    break;
+                    
+                case 0x0a:
+                    Log.d(TAG, "Tx Power Level");
+                    break;
+                    
+                case 0x0d:
+                    Log.d(TAG, "Class of Device");
+                    break;
+                    
+                case 0x0e:
+                    Log.d(TAG, "Simple Pairing Hash C");
+                    break;
+                    
+                case 0x0f:
+                    Log.d(TAG, "Simple Pairing Randomizer R");
+                    break;
+                    
+                case 0x10:
+                    Log.d(TAG, "Device ID/Security Manager TK Value");
+                    break;
+                    
+                case 0x11:
+                    Log.d(TAG, "Security Manager Out of Band Flags");
+                    break;
+                    
+                case 0x12:
+                    Log.d(TAG, "Slave Connection Interval Range");
+                    break;
+                    
+                case 0x14:
+                    Log.d(TAG, "List of 16-bit Service Solicitation UUIDs");
+                    break;
+                    
+                case 0x1f:
+                    Log.d(TAG, "List of 32-bit Service Solicitation UUIDs");
+                    break;
+                    
+                case 0x15:
+                    Log.d(TAG, "List of 128-bit Service Solicitation UUIDs");
+                    break;
+                    
+                case 0x16:
+                    Log.d(TAG, "Service Data/16bit UUID");
+                    break;
+                    
+                case 0x20:
+                    Log.d(TAG, "Service Data - 32-bit UUID");
+                    break;
+                    
+                case 0x21:
+                    Log.d(TAG, "Service Data - 128-bit UUID");
+                    break;
+                    
+                case 0x17:
+                    Log.d(TAG, "Public Target Address");
+                    break;
+                    
+                case 0x18:
+                    Log.d(TAG, "Random Target Address");
+                    break;
+                    
+                case 0x19:
+                    Log.d(TAG, "Appearance");
+                    break;
+                    
+                case 0x1a:
+                    Log.d(TAG, "Advertising Interval");
+                    break;
+                    
+                case 0x1b:
+                    Log.d(TAG, "​LE Bluetooth Device Address");
+                    break;
+                    
+                case 0x1c:
+                    Log.d(TAG, "LE Role");
+                    break;
+                    
+                case 0x1d:
+                    Log.d(TAG, "Simple Pairing Hash C-256");
+                    break;
+                    
+                case 0x1e:
+                    Log.d(TAG, "Simple Pairing Randomizer R-256");
+                    break;
+                    
+                case 0x3d:
+                    Log.d(TAG, "3D Information Data");
+                    break;
+                    
+                case 0xff:
+                    Log.d(TAG, "Manufacturer Specific Data");
+                    break;
+                    
+                default:
+                    Log.e(TAG, "unknown GAP : " + (scanRecord[pos+1] & 0xff));
+                    break;
+                }
+                pos += len + 1;
+            } else {
+                break;
+            }
+            
+            
+        }
+    }
+    
     public static int startConnect(Context context, UUID service, UUID ch, connectResultCallback callback) {
         if (sStatus != Status.FOUND) {
             //スキャンできていないので接続できない
